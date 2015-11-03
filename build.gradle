@@ -1,0 +1,91 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven {
+            url "http://repository.jboss.org/nexus/content/groups/public/"
+        }
+
+    }
+    dependencies {
+        classpath 'org.hibernate.build.gradle:gradle-maven-publish-auth:2.0.1'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.1.1'
+        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'license'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
+group 'com.gabizou'
+archivesBaseName = 'DataAccessories'
+version '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'sponge'
+        url = 'http://repo.spongepowered.org/maven'
+    }
+}
+
+dependencies {
+    compile 'org.spongepowered:spongeapi:2.1-SNAPSHOT'
+}
+
+// Generates javadoc.jar
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier 'javadoc'
+    from javadoc.destinationDir
+    javadoc.options.links("http://docs.guava-libraries.googlecode.com/git-history/v18.0/javadoc/",
+                          "http://jd.spongepowered.org/",
+                          "http://docs.oracle.com/javase/8/docs/api/")
+}
+// Generates sources.jar
+task sourceJar(type: Jar) {
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives jar
+    archives sourceJar
+    archives javadocJar
+}
+
+processResources {
+    from 'LICENSE'
+}
+
+license {
+    ext.name = project.name
+    ext.organization = project.organization
+    ext.url = project.url
+    ext.year = project.inceptionYear
+    exclude "**/*.info"
+    exclude "assets/**"
+    header file("KRAFTRPG-LICENSE")
+    sourceSets = project.sourceSets
+    ignoreFailures false
+    strictCheck true
+    mapping {
+        java = 'SLASHSTAR_STYLE'
+    }
+}
+
+jar {
+    manifest {
+        attributes(
+                "Implementation-Title": project.name,
+                "Implementation-Version": version + "+" + ciSystem + "-b" + buildNumber + ".git-" + commit,
+                "Built-By": System.properties['user.name'],
+                "Created-By": System.properties['java.vm.version'] + " (" + System.properties['java.vm.vendor'] + ")",
+                "Implementation-Vendor": url
+        )
+    }
+    from ("${projectDir}") {
+        include('LICENSE', 'README.md')
+    }
+}
